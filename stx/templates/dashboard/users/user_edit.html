@@ -1,0 +1,84 @@
+{% extends 'dashboard/dashboard.html' %}
+{% load static %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-8">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-6">Edit User</h2>
+
+        {% if messages %}
+            <div>
+                {% for message in messages %}
+                    <div class="mb-4 p-3 rounded {{ message.tags }} bg-green-100 text-green-800">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div>
+                <label for="full_name" class="block font-medium text-gray-700 mb-1">Full Name</label>
+                <input type="text" name="full_name" id="full_name" value="{{ user.full_name }}"
+                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+
+            <div>
+                <label for="email" class="block font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" name="email" id="email" value="{{ user.email }}"
+                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+
+            <div>
+                <label for="phone_number" class="block font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="text" name="phone_number" id="phone_number" value="{{ user.phone_number }}"
+                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label for="role" class="block font-medium text-gray-700 mb-1">Role</label>
+                <select name="role" id="role"
+                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                    <option value="employee" {% if user.role == 'employee' %}selected{% endif %}>Employee</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="bio" class="block font-medium text-gray-700 mb-1">Bio</label>
+                <textarea name="bio" id="bio" rows="3"
+                          class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ user.bio }}</textarea>
+            </div>
+
+            <div>
+                <label for="photo" class="block font-medium text-gray-700 mb-1">Profile Photo</label>
+                <input type="file" name="photo" id="photo"
+                       class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" accept="image/*" onchange="previewPhoto(event)">
+                {% if user.photo %}
+                    <img id="photoPreview" src="{{ user.photo.url }}" class="mt-3 w-32 h-32 rounded-full object-cover border">
+                {% else %}
+                    <img id="photoPreview" src="#" class="mt-3 w-32 h-32 rounded-full object-cover border hidden">
+                {% endif %}
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="{% url 'user_list' %}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Cancel</a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function previewPhoto(event){
+        const preview = document.getElementById('photoPreview');
+        preview.src = URL.createObjectURL(event.target.files[0]);
+        preview.classList.remove('hidden');
+    }
+</script>
+
+{% endblock %}

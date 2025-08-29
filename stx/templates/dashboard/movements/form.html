@@ -1,0 +1,64 @@
+{% extends 'dashboard/dashboard.html' %}
+
+{% block title %}Ajouter / Modifier Mouvement de Stock{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">Ajouter / Modifier Mouvement de Stock</h3>
+
+    {% if error %}
+        <div class="mb-4 p-3 bg-red-100 text-red-700 rounded border border-red-300">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        <div class="mb-4">
+            <label for="product" class="block mb-1 font-medium text-gray-700 dark:text-gray-300">Produit <span class="text-red-600">*</span></label>
+            <select id="product" name="product" required
+                class="block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:ring-red-500 focus:border-red-500">
+                <option value="">-- Choisir un produit --</option>
+                {% for prod in products %}
+                    <option value="{{ prod.id }}" {% if request.POST.product == prod.id|stringformat:"s" %}selected{% endif %}>{{ prod.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="movement_type" class="block mb-1 font-medium text-gray-700 dark:text-gray-300">Type <span class="text-red-600">*</span></label>
+            <select id="movement_type" name="movement_type" required
+                class="block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:ring-red-500 focus:border-red-500">
+                <option value="">-- Choisir le type --</option>
+                <option value="in" {% if request.POST.movement_type == 'in' %}selected{% endif %}>Entrée</option>
+                <option value="out" {% if request.POST.movement_type == 'out' %}selected{% endif %}>Sortie</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="quantity" class="block mb-1 font-medium text-gray-700 dark:text-gray-300">Quantité <span class="text-red-600">*</span></label>
+            <input type="number" min="1" step="1" id="quantity" name="quantity" required
+                value="{{ request.POST.quantity|default:'' }}"
+                class="block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:ring-red-500 focus:border-red-500" />
+        </div>
+
+        <div class="mb-6">
+            <label for="description" class="block mb-1 font-medium text-gray-700 dark:text-gray-300">Description (optionnel)</label>
+            <textarea id="description" name="description" rows="3"
+                class="block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:ring-red-500 focus:border-red-500">{{ request.POST.description|default:'' }}</textarea>
+        </div>
+
+        <div class="flex justify-between items-center">
+            <button type="submit" 
+                class="bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2 rounded shadow transition">
+                Enregistrer
+            </button>
+            <a href="{% url 'movement_list' %}" 
+               class="text-gray-600 hover:underline dark:text-gray-300">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

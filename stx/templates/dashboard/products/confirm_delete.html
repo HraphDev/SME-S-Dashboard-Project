@@ -1,0 +1,27 @@
+{% extends 'dashboard/dashboard.html' %}
+{% block title %}Confirmer la suppression{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg animate-fade-in-up">
+        <h2 class="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">⚠️ Confirmation de suppression</h2>
+
+        <p class="text-gray-800 dark:text-gray-300 text-lg mb-6">
+            Voulez-vous vraiment supprimer <strong class="text-red-600 dark:text-red-400">{{ object.name }}</strong> ?
+            <span class="underline font-semibold text-red-500">Cette action est irréversible.</span>
+        </p>
+
+        <form method="post" class="flex flex-wrap gap-4">
+            {% csrf_token %}
+            <button type="submit"
+                    class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md shadow-md transition duration-300">
+                ✅ Oui, supprimer
+            </button>
+            <a href="{{ cancel_url }}"
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-2 rounded-md shadow-md transition duration-300">
+                🔙 Annuler
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

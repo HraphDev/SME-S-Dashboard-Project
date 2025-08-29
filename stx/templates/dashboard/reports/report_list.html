@@ -1,0 +1,485 @@
+{% extends 'dashboard/dashboard.html' %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-6 px-4">
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">Reports Dashboard</h2>
+    <div class="mb-2">
+        <a href="{% url 'export_reports_pdf' %}" class="btn btn-danger">Export Reports (PDF)</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white shadow-lg rounded-lg p-4 cursor-pointer hover:shadow-xl transition-all duration-300 border-l-4 border-blue-500" onclick="toggleSection('productsSection')">
+            <div class="flex items-center">
+                <div class="rounded-full bg-blue-100 p-3 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-1 text-gray-700">Products</h3>
+                    <p class="text-gray-600 text-2xl font-semibold">{{ total_products }} total</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg p-4 cursor-pointer hover:shadow-xl transition-all duration-300 border-l-4 border-green-500" onclick="toggleSection('movementsSection')">
+            <div class="flex items-center">
+                <div class="rounded-full bg-green-100 p-3 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-1 text-gray-700">Movements</h3>
+                    <p class="text-gray-600 text-2xl font-semibold">{{ total_movements }} total</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg p-4 cursor-pointer hover:shadow-xl transition-all duration-300 border-l-4 border-red-500" onclick="toggleSection('lowStockSection')">
+            <div class="flex items-center">
+                <div class="rounded-full bg-red-100 p-3 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-1 text-gray-700">Low Stock</h3>
+                    <p class="text-gray-600 text-2xl font-semibold">{{ low_stock_count }} products</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg p-4 cursor-pointer hover:shadow-xl transition-all duration-300 border-l-4 border-purple-500" onclick="toggleSection('suppliersSection')">
+            <div class="flex items-center">
+                <div class="rounded-full bg-purple-100 p-3 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-1 text-gray-700">Suppliers</h3>
+                    <p class="text-gray-600 text-2xl font-semibold">{{ total_suppliers }} total</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-xl text-gray-800">Product Stock Levels</h3>
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Inventory</span>
+            </div>
+            <div class="h-80">
+                <canvas id="productStockChart" data-products='{{ product_stock_data|safe }}'></canvas>
+            </div>
+            <div class="mt-4 text-sm text-gray-500">
+                <p>Shows current stock levels for all products in inventory</p>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-xl text-gray-800">Movements Over Time</h3>
+                <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Activity</span>
+            </div>
+            <div class="h-80">
+                <canvas id="movementChart" data-labels='{{ movement_chart_labels|safe }}' data-values='{{ movement_chart_values|safe }}'></canvas>
+            </div>
+            <div class="mt-4 text-sm text-gray-500">
+                <p>Tracks inventory movements (in/out) over the selected period</p>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-xl text-gray-800">Products per Supplier</h3>
+                <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Suppliers</span>
+            </div>
+            <div class="h-80">
+                <canvas id="supplierChart" data-labels='{{ supplier_labels|safe }}' data-values='{{ supplier_values|safe }}'></canvas>
+            </div>
+            <div class="mt-4 text-sm text-gray-500">
+                <p>Distribution of products across different suppliers</p>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-xl text-gray-800">Low Stock Alerts</h3>
+                <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Alert</span>
+            </div>
+            <div class="h-80 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                 {% for product in low_stock_products %}
+<tr class="{% if product.quantity < 5 %}bg-red-50{% else %}bg-yellow-50{% endif %}">
+    <td>{{ product.name }}</td>
+    <td>{{ product.quantity }}</td>
+    <td>
+        <span class="{% if product.quantity < 5 %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+            {% if product.quantity < 5 %}Critical{% else %}Low{% endif %}
+        </span>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="3">No low stock products found</td>
+</tr>
+{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4 text-sm text-gray-500">
+                <p>Products with stock levels below the minimum threshold (10 units)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 space-y-12 hidden-section">
+        <div id="productsSection" class="hidden bg-white shadow-lg rounded-lg p-6">
+            <h3 class="font-bold text-xl mb-4 text-gray-800">Product Stock Details</h3>
+            <div class="h-96">
+                <canvas id="detailedProductStockChart" data-products='{{ product_stock_data|safe }}'></canvas>
+            </div>
+        </div>
+
+        <div id="movementsSection" class="hidden bg-white shadow-lg rounded-lg p-6">
+            <h3 class="font-bold text-xl mb-4 text-gray-800">Movement Details</h3>
+            <div class="h-96">
+                <canvas id="detailedMovementChart" data-labels='{{ movement_chart_labels|safe }}' data-values='{{ movement_chart_values|safe }}'></canvas>
+            </div>
+        </div>
+<div id="lowStockSection" class="hidden bg-white shadow-lg rounded-lg p-6">
+    <h3 class="font-bold text-xl mb-4 text-gray-800">Low Stock Products</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for product in low_stock_products %}
+                <tr class="{% if product.quantity < 5 %}bg-red-50{% else %}bg-yellow-50{% endif %}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ product.name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ product.quantity }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if product.quantity < 5 %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {% if product.quantity < 5 %}Critical{% else %}Low{% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No low stock products found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+        <div id="suppliersSection" class="hidden bg-white shadow-lg rounded-lg p-6">
+            <h3 class="font-bold text-xl mb-4 text-gray-800">Supplier Distribution</h3>
+            <div class="h-96">
+                <canvas id="detailedSupplierChart" data-labels='{{ supplier_labels|safe }}' data-values='{{ supplier_values|safe }}'></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Function to toggle sections
+    function toggleSection(sectionId) {
+        const sections = ['productsSection', 'movementsSection', 'lowStockSection', 'suppliersSection'];
+        sections.forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+        document.getElementById(sectionId).classList.remove('hidden');
+        
+        // Scroll to the section
+        document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Helper function to safely parse JSON data from data-* attributes
+    function parseJSONSafe(jsonString) {
+        try { 
+            return JSON.parse(jsonString); 
+        } catch(e) { 
+            console.error('Error parsing JSON:', e);
+            return []; 
+        }
+    }
+
+    // Generate a color palette for charts
+    function generateColorPalette(count) {
+        const palettes = [
+            ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
+            ['#6366F1', '#EC4899', '#14B8A6', '#F97316', '#84CC16'],
+            ['#06B6D4', '#A855F7', '#EAB308', '#22C55E', '#F43F5E']
+        ];
+        
+        // Return one of the palettes based on count
+        return palettes[count % 3];
+    }
+
+    // Initialize charts when the DOM is loaded
+    document.addEventListener("DOMContentLoaded", function() {
+        // Get data from template variables
+        const productStockData = parseJSONSafe(document.getElementById('productStockChart').dataset.products);
+        const movementLabels = parseJSONSafe(document.getElementById('movementChart').dataset.labels);
+        const movementValues = parseJSONSafe(document.getElementById('movementChart').dataset.values);
+        const supplierLabels = parseJSONSafe(document.getElementById('supplierChart').dataset.labels);
+        const supplierValues = parseJSONSafe(document.getElementById('supplierChart').dataset.values);
+
+        // Product Stock Chart
+        const ctxProducts = document.getElementById('productStockChart');
+        if(ctxProducts && productStockData.length > 0){
+            const colors = generateColorPalette(productStockData.length);
+            
+            new Chart(ctxProducts, {
+                type: 'bar',
+                data: {
+                    labels: productStockData.map(p => p.name),
+                    datasets: [{
+                        label: 'Stock Quantity',
+                        data: productStockData.map(p => p.quantity),
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('0.6', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantity'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Products'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Current Stock Levels'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Movements Chart
+        const ctxMovements = document.getElementById('movementChart');
+        if(ctxMovements && movementLabels.length > 0){
+            new Chart(ctxMovements, {
+                type: 'line',
+                data: {
+                    labels: movementLabels,
+                    datasets: [{
+                        label: 'Number of Movements',
+                        data: movementValues,
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Movements'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Inventory Movements Over Time'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Supplier Chart
+        const ctxSuppliers = document.getElementById('supplierChart');
+        if(ctxSuppliers && supplierLabels.length > 0){
+            const colors = generateColorPalette(supplierLabels.length);
+            
+            new Chart(ctxSuppliers, {
+                type: 'doughnut',
+                data: {
+                    labels: supplierLabels,
+                    datasets: [{
+                        label: 'Products per Supplier',
+                        data: supplierValues,
+                        backgroundColor: colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Product Distribution by Supplier'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create detailed charts for the hidden sections
+        createDetailedCharts(productStockData, movementLabels, movementValues, supplierLabels, supplierValues);
+    });
+
+    // Create detailed versions of the charts for the expandable sections
+    function createDetailedCharts(productStockData, movementLabels, movementValues, supplierLabels, supplierValues) {
+        // Detailed Product Stock Chart
+        const detailedProductCtx = document.getElementById('detailedProductStockChart');
+        if(detailedProductCtx && productStockData.length > 0){
+            const colors = generateColorPalette(productStockData.length);
+            
+            new Chart(detailedProductCtx, {
+                type: 'bar',
+                data: {
+                    labels: productStockData.map(p => p.name),
+                    datasets: [{
+                        label: 'Stock Quantity',
+                        data: productStockData.map(p => p.quantity),
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('0.6', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantity'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Detailed Product Stock Levels'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Detailed Movements Chart
+        const detailedMovementCtx = document.getElementById('detailedMovementChart');
+        if(detailedMovementCtx && movementLabels.length > 0){
+            new Chart(detailedMovementCtx, {
+                type: 'line',
+                data: {
+                    labels: movementLabels,
+                    datasets: [{
+                        label: 'Number of Movements',
+                        data: movementValues,
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Movements'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Detailed Movement History'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Detailed Supplier Chart
+        const detailedSupplierCtx = document.getElementById('detailedSupplierChart');
+        if(detailedSupplierCtx && supplierLabels.length > 0){
+            const colors = generateColorPalette(supplierLabels.length);
+            
+            new Chart(detailedSupplierCtx, {
+                type: 'pie',
+                data: {
+                    labels: supplierLabels,
+                    datasets: [{
+                        label: 'Products per Supplier',
+                        data: supplierValues,
+                        backgroundColor: colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Detailed Supplier Distribution'
+                        }
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

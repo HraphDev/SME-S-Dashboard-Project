@@ -1,0 +1,207 @@
+{% extends 'dashboard/dashboard.html' %}
+{% block title %}Mouvements de Stock{% endblock %}
+
+{% block content %}
+<div class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">📦 Mouvements de Stock</h3>
+    
+    <div class="flex flex-wrap gap-4 mb-6">
+        <a href="{% url 'movement_create' %}" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded shadow transition">
+            + Ajouter un mouvement
+        </a>
+        
+        <button onclick="openDeleteModal()" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded shadow transition">
+            🗑️ Supprimer tous les mouvements
+        </button>
+    </div>
+    
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+            <div class="text-center mb-6">
+                <div class="text-red-500 text-5xl mb-4">⚠️</div>
+                <h3 class="text-2xl font-bold text-gray-800 dark:text-white">Confirmation de suppression</h3>
+            </div>
+            
+            <p class="text-gray-600 dark:text-gray-300 mb-6 text-center">
+                Êtes-vous sûr de vouloir supprimer <span class="font-bold text-red-500">tous les mouvements</span> ? 
+                Cette action est irréversible et supprimera définitivement toutes les données.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <form id="deleteAllForm" method="POST" action="{% url 'delete_all_movements' %}">
+                    {% csrf_token %}
+                    <button type="submit" 
+                        class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                        Oui, supprimer tout
+                    </button>
+                </form>
+                
+                <button onclick="closeDeleteModal()" 
+                    class="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition duration-300">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <form method="get" class="flex flex-wrap gap-4 mb-6 items-end">
+        <div>
+            <label for="product" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Produit</label>
+            <select id="product" name="product" class="block w-full max-w-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:ring-red-500 focus:border-red-500">
+                <option value="">-- Produit --</option>
+                {% for prod in products %}
+                    <option value="{{ prod.id }}" {% if selected_product == prod.id|stringformat:'s' %}selected{% endif %}>{{ prod.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="movement_type" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
+            <select id="movement_type" name="movement_type" class="block w-full max-w-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:ring-red-500 focus:border-red-500">
+                <option value="">-- Type --</option>
+                <option value="in" {% if selected_type == 'in' %}selected{% endif %}>Entrée</option>
+                <option value="out" {% if selected_type == 'out' %}selected{% endif %}>Sortie</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="start_date" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Date début</label>
+            <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="block w-full max-w-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:ring-red-500 focus:border-red-500">
+        </div>
+
+        <div>
+            <label for="end_date" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Date fin</label>
+            <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="block w-full max-w-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:ring-red-500 focus:border-red-500">
+        </div>
+
+        <div class="flex gap-2">
+            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded shadow transition">Filtrer</button>
+            <a href="{% url 'movement_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-2 rounded shadow transition">Réinitialiser</a>
+        </div>
+    </form>
+
+    <div class="mb-8">
+        <canvas id="movementChart" height="100" class="w-full"></canvas>
+    </div>
+
+    <div class="overflow-x-auto rounded-lg shadow">
+        <table class="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+            <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                <tr>
+                    <th class="text-left py-3 px-4">Produit</th>
+                    <th class="text-left py-3 px-4">Type</th>
+                    <th class="text-left py-3 px-4">Quantité</th>
+                    <th class="text-left py-3 px-4">Date</th>
+                    <th class="text-left py-3 px-4">Description</th>
+                    <th class="text-left py-3 px-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-600 dark:text-gray-300">
+                {% for movement in movements %}
+                <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <td class="py-3 px-4">{{ movement.product.name }}</td>
+                    <td class="py-3 px-4">{{ movement.get_movement_type_display }}</td>
+                    <td class="py-3 px-4">{{ movement.quantity }}</td>
+                    <td class="py-3 px-4">{{ movement.date|date:"Y-m-d H:i" }}</td>
+                    <td class="py-3 px-4">{{ movement.description|default:"-" }}</td>
+                 <td class="py-3 px-4 flex gap-2">
+      <a href="{% url 'movement_update' movement.pk %}" class="text-blue-600 hover:text-blue-800 font-semibold">Modifier</a>
+      <a href="{% url 'movement_delete' movement.pk %}" class="text-red-600 hover:text-red-800 font-semibold">Supprimer</a>
+    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 italic text-gray-500 dark:text-gray-400">Aucun mouvement trouvé.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-6 flex justify-center">
+        {% if movements.has_other_pages %}
+            <nav aria-label="Pagination">
+                <ul class="inline-flex -space-x-px text-sm">
+                    {% if movements.has_previous %}
+                        <li>
+                            <a href="?page={{ movements.previous_page_number }}{% if request.GET %}&{{ request.GET.urlencode|slice:'6:' }}{% endif %}" 
+                               class="px-3 py-1 rounded-l border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                               Précédent
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="px-3 py-1 border-t border-b border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        Page {{ movements.number }} / {{ movements.paginator.num_pages }}
+                    </li>
+                    {% if movements.has_next %}
+                        <li>
+                            <a href="?page={{ movements.next_page_number }}{% if request.GET %}&{{ request.GET.urlencode|slice:'6:' }}{% endif %}" 
+                               class="px-3 py-1 rounded-r border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                               Suivant
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="movement-data" type="application/json">
+  {{ chart_data_json|safe }}
+</script>
+<script>
+    const rawData = JSON.parse(document.getElementById('movement-data').textContent);
+
+    const labels = rawData.map(item => item.date);
+    const data = rawData.map(item => item.total);
+
+    const ctx = document.getElementById('movementChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Mouvements par jour',
+                data: data,
+                backgroundColor: '#ea4335'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    
+    function openDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+    
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteModal');
+        if (event.target === modal) {
+            closeDeleteModal();
+        }
+    }
+    
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeDeleteModal();
+        }
+    });
+</script>
+
+<style>
+    #deleteModal {
+        transition: opacity 0.3s ease;
+    }
+</style>
+
+{% endblock %}

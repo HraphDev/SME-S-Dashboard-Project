@@ -1,0 +1,71 @@
+{% extends 'dashboard/dashboard.html' %}
+{% block title %}Messagerie{% endblock %}
+
+{% load static %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        📩 Messages
+    </h2>
+
+    <form method="POST" class="bg-white shadow-lg rounded-xl p-6 mb-8 space-y-4">
+        {% csrf_token %}
+        
+        <div>
+            <label for="receiver" class="block text-gray-700 font-medium mb-1">Send to:</label>
+            <select 
+                name="receiver" 
+                id="receiver" 
+                required
+                class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-2"
+            >
+                <option value="" disabled selected>Choose a user...</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="content" class="block text-gray-700 font-medium mb-1">Message:</label>
+            <textarea 
+                name="content" 
+                rows="3" 
+                placeholder="Type your message..." 
+                required
+                class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-2"
+            ></textarea>
+        </div>
+
+        <button 
+            type="submit" 
+            class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow hover:bg-indigo-700 transition"
+        >
+            Send
+        </button>
+    </form>
+
+    <div class="bg-gray-50 rounded-xl p-6 shadow-inner max-h-[500px] overflow-y-auto space-y-4">
+        {% for msg in messages %}
+            {% if msg.sender == request.user %}
+                <div class="flex justify-end">
+                    <div class="bg-indigo-600 text-white rounded-lg p-3 max-w-xs shadow-md">
+                        <p class="text-sm">{{ msg.content }}</p>
+                        <span class="text-xs text-gray-200 block mt-1">{{ msg.timestamp|date:"H:i d M" }}</span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="flex justify-start">
+                    <div class="bg-gray-200 text-gray-800 rounded-lg p-3 max-w-xs shadow-md">
+                        <p class="text-sm"><b>{{ msg.sender.username }}</b>: {{ msg.content }}</p>
+                        <span class="text-xs text-gray-500 block mt-1">{{ msg.timestamp|date:"H:i d M" }}</span>
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <p class="text-gray-500 text-center">No messages yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'dashboard/dashboard.html' %}
+
+{% block title %}Liste des utilisateurs{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto mt-10">
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Liste des utilisateurs</h2>
+
+        <div class="flex justify-between items-center mb-4">
+            <a href="{% url 'invite_user' %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+               Inviter un utilisateur
+            </a>
+            {% if users %}
+                <p class="text-gray-700 dark:text-gray-300">Nombre d'utilisateurs : {{ users|length }}</p>
+            {% else %}
+                <p class="text-gray-700 dark:text-gray-300">Aucun utilisateur trouvé.</p>
+            {% endif %}
+        </div>
+
+        {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for message in messages %}
+                    <div class="px-4 py-2 rounded-lg text-white
+                        {% if message.tags == 'success' %}bg-green-500
+                        {% elif message.tags == 'error' %}bg-red-500
+                        {% else %}bg-blue-500{% endif %} 
+                        flex justify-between items-center">
+                        <span>{{ message }}</span>
+                        <button type="button" class="text-white font-bold" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <thead class="bg-gray-100 dark:bg-gray-700">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 font-medium">Email</th>
+                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 font-medium">Rôle</th>
+                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 font-medium">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for user in users %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <td class="px-4 py-2 text-gray-800 dark:text-gray-200">{{ user.email }}</td>
+                            <td class="px-4 py-2 text-gray-800 dark:text-gray-200 capitalize">{{ user.role }}</td>
+                            <td class="px-4 py-2 flex gap-2">
+                                <a href="{% url 'user_edit' user.id %}" 
+                                   class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg transition duration-200">
+                                   Modifier
+                                </a>
+                                <a href="{% url 'user_delete' user.id %}" 
+                                   class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition duration-200">
+                                   Supprimer
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-4 py-4 text-center text-gray-500 dark:text-gray-400">
+                                Aucun utilisateur trouvé.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

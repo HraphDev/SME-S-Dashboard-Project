@@ -1,0 +1,329 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Tableau de bord{% endblock %}
+{% load static %}
+{% block content %}
+{% if request.user.first_login == False and not request.user.profile_complete %}
+<div class="modal fade show" id="firstLoginModal" tabindex="-1" style="display: block;" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Configuration requise</h5>
+            </div>
+            <div class="modal-body">
+                <p>Bienvenue sur la plateforme !</p>
+                <p>Veuillez compléter votre profil pour continuer.</p>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'profile_settings' %}" class="btn btn-primary">
+                    Configurer mon profil
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+{% endif %}
+
+<div class="flex flex-col lg:flex-row gap-6 p-4">
+    <div class="w-full lg:w-3/4">
+        <div class="welcome-banner mb-6 p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-md text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold">Bienvenue sur votre Dashboard, {{ request.user.first_name }}!</h2>
+                    <p class="text-blue-100">Consultez vos statistiques et gérer vos produits efficacement.</p>
+                </div>
+                <i class="fas fa-chart-line text-2xl opacity-70"></i>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow p-4">
+                <h2 class="text-lg font-bold mb-4">Mouvements produits (7 derniers jours)</h2>
+<canvas id="movementsChart" class="w-full h-64"></canvas>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-4">
+                <h2 class="text-lg font-bold mb-4">Niveaux de Stock des Produits</h2>
+                <canvas id="productQuantityChart" height="250"></canvas>
+            </div>
+        </div>
+
+        <div class="available-products bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">🛍️ Produits disponibles</h3>
+            
+            <div class="relative overflow-hidden">
+                <div id="product-slider" class="flex transition-transform duration-700 ease-in-out">
+                    {% for product in recent_products %}
+                    <div class="w-1/4 flex-shrink-0 px-2">
+                        <div class="bg-gray-50 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition border border-gray-100">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="h-40 w-full object-cover">
+                            {% else %}
+                                <img src="{% static 'images/default-product.jpg' %}" alt="Default Image" class="h-40 w-full object-cover">
+                            {% endif %}
+                            <div class="p-4">
+                                <h4 class="font-semibold text-gray-900 truncate">{{ product.name }}</h4>
+                                <p class="text-sm text-gray-500">{{ product.category.name }}</p>
+                                <p class="mt-2 font-bold {% if product.quantity < 5 %}text-red-600{% else %}text-indigo-600{% endif %}">
+                                    {{ product.quantity }} en stock
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <button id="prevBtn" class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white shadow p-2 rounded-full hover:bg-indigo-500 hover:text-white transition">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="nextBtn" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white shadow p-2 rounded-full hover:bg-indigo-500 hover:text-white transition">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full lg:w-1/4 mt-6 lg:mt-0">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="profile-section text-center">
+                <div class="profile-photo-container mx-auto mb-4">
+                    {% if user_photo %}
+                        <img src="{{ user_photo }}" alt="Profile Photo" class="profile-photo w-24 h-24 rounded-full object-cover mx-auto border-4 border-gray-200">
+                    {% else %}
+                        <div class="profile-initials w-24 h-24 rounded-full bg-blue-500 text-white flex items-center justify-center text-2xl font-bold mx-auto border-4 border-gray-200">
+                            {{ user_name|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="profile-name mb-2">
+                    <h3 class="font-bold text-xl text-gray-800">{{ user_name }}</h3>
+                    <span class="profile-role text-sm text-gray-500">
+                        {% if user_role == 'admin' %}Administrateur{% elif user_role == 'employee' %}Employé{% else %}Utilisateur{% endif %}
+                    </span>
+                </div>
+                
+                <div class="profile-actions flex justify-center space-x-4 mt-4">
+                    <a href="{% url 'inbox' %}" class="profile-action-btn text-gray-500 hover:text-blue-500 transition" title="Send Message">
+                        <i class="fas fa-envelope text-xl"></i>
+                    </a>
+                    
+                    <a href="{% url 'profile_settings' %}" class="profile-action-btn text-gray-500 hover:text-blue-500 transition" title="Profile Settings">
+                        <i class="fas fa-cog text-xl"></i>
+                    </a>
+                    
+                    <a href="{% url 'logout' %}" class="profile-action-btn text-gray-500 hover:text-red-500 transition" title="Logout">
+                        <i class="fas fa-sign-out-alt text-xl"></i>
+                    </a>
+                </div>
+            </div>
+<div class="mt-6 pt-6 border-t border-gray-200">
+    <h4 class="font-bold text-lg mb-4 text-gray-700">Statistiques Rapides</h4>
+    
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="rounded-full bg-blue-100 p-2 mr-3">
+                    <i class="fas fa-box text-blue-500"></i>
+                </div>
+                <span class="text-gray-600">Produits</span>
+            </div>
+            <span class="font-bold text-gray-800">{{ total_products }}</span>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="rounded-full bg-green-100 p-2 mr-3">
+                    <i class="fas fa-tags text-green-500"></i>
+                </div>
+                <span class="text-gray-600">Catégories</span>
+            </div>
+            <span class="font-bold text-gray-800">{{ total_categories }}</span>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="rounded-full bg-purple-100 p-2 mr-3">
+                    <i class="fas fa-exchange-alt text-purple-500"></i>
+                </div>
+                <span class="text-gray-600">Mouvements</span>
+            </div>
+            <span class="font-bold text-gray-800">{{ today_movements }}</span>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="rounded-full bg-red-100 p-2 mr-3">
+                    <i class="fas fa-exclamation-triangle text-red-500"></i>
+                </div>
+                <span class="text-gray-600">Alertes Stock</span>
+            </div>
+            <span class="font-bold text-red-600">{{ low_stock_count }}</span>
+        </div>
+    </div>
+</div>
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h4 class="font-bold text-lg mb-4 text-gray-700">Capacité du Stock</h4>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-600">Espace utilisé</span>
+                            <span class="text-sm font-medium text-gray-600">{{ stock_percentage|floatformat:0 }}%</span>
+                        </div>
+     <div class="w-full bg-gray-200 rounded-full h-2.5">
+    <div class="h-2.5 rounded-full progress-bar" 
+         data-percentage="{{ stock_percentage }}"
+         data-color="{% if stock_percentage >= 80 %}red
+                     {% elif stock_percentage >= 50 %}yellow
+                     {% else %}blue{% endif %}">
+    </div>
+</div>
+                        <div class="flex justify-between mt-1">
+                            <span class="text-xs text-gray-500">{{ total_stock }} unités</span>
+                            <span class="text-xs text-gray-500">{{ total_capacity }} capacité max</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    <span class="font-medium">{{ low_stock_count }} produit(s)</span> avec stock faible
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div class="text-center p-3 bg-green-50 rounded-lg">
+<div class="text-2xl font-bold text-green-700">{{ well_stocked_count }}</div>
+                            <div class="text-xs text-green-600">Stock Bon</div>
+                        </div>
+                        <div class="text-center p-3 bg-red-50 rounded-lg">
+                            <div class="text-2xl font-bold text-red-700">{{ low_stock_count }}</div>
+                            <div class="text-xs text-red-600">Stock Faible</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+    {{ chart_labels|json_script:"chartLabels" }}
+    {{ chart_data|json_script:"chartData" }}
+    {{ product_names|json_script:"productNames" }}
+    {{ product_quantities|json_script:"productQuantities" }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const labels = JSON.parse(document.getElementById('chartLabels').textContent);
+            const data = JSON.parse(document.getElementById('chartData').textContent);
+
+            const ctx = document.getElementById('movementsChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Mouvements',
+                        data: data,
+                        borderColor: '#4f63ff',
+                        backgroundColor: 'rgba(79, 99, 255, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+
+            document.getElementById('movementsChart').classList.add('visible');
+        });
+    </script>
+
+  
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const productNames = JSON.parse(document.getElementById('productNames').textContent || '[]');
+            const productQuantities = JSON.parse(document.getElementById('productQuantities').textContent || '[]');
+            console.log("Product Chart Names:", productNames, "Quantities:", productQuantities);
+
+            if (productNames.length && productQuantities.length) {
+                const ctx = document.getElementById('productQuantityChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: productNames,
+                        datasets: [{
+                            label: 'Quantité en stock',
+                            data: productQuantities,
+                            backgroundColor: 'rgba(79, 99, 255, 0.7)',
+                            borderColor: '#3a50d6',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Quantité' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Produits' },
+                                ticks: { maxRotation: 45, minRotation: 45 }
+                            }
+                        },
+                        plugins: {
+                            legend: { position: 'top', labels: { usePointStyle: true } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) { return `Quantité: ${context.raw}`; }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.warn('Product chart: No data to display');
+            }
+        });
+    </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const percentage = bar.getAttribute('data-percentage');
+        const color = bar.getAttribute('data-color');
+        
+        bar.style.width = percentage + '%';
+        
+        if (color === 'red') {
+            bar.classList.add('bg-red-600');
+        } else if (color === 'yellow') {
+            bar.classList.add('bg-yellow-500');
+        } else {
+            bar.classList.add('bg-blue-600');
+        }
+    });
+});
+</script>
+{% endblock %}

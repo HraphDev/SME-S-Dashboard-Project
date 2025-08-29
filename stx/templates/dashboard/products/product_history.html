@@ -1,0 +1,70 @@
+{% extends 'dashboard/dashboard.html' %}
+
+{% block title %}Historique des mouvements - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">
+        📦 Historique des mouvements pour : {{ product.name }}
+    </h3>
+
+    <div class="overflow-x-auto rounded-lg shadow">
+        <table class="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+            <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                <tr>
+                    <th class="text-left py-3 px-4">Type</th>
+                    <th class="text-left py-3 px-4">Quantité</th>
+                    <th class="text-left py-3 px-4">Date</th>
+                    <th class="text-left py-3 px-4">Description</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-600 dark:text-gray-300">
+                {% for movement in movements %}
+                <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <td class="py-3 px-4">{{ movement.get_movement_type_display }}</td>
+                    <td class="py-3 px-4">{{ movement.quantity }}</td>
+                    <td class="py-3 px-4">{{ movement.date|date:"Y-m-d H:i" }}</td>
+                    <td class="py-3 px-4">{{ movement.description|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 italic text-gray-500 dark:text-gray-400">Aucun mouvement trouvé pour ce produit.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-6 flex justify-center">
+        {% if movements.has_other_pages %}
+            <nav aria-label="Pagination">
+                <ul class="inline-flex -space-x-px text-sm">
+                    {% if movements.has_previous %}
+                        <li>
+                            <a href="?page={{ movements.previous_page_number }}" 
+                               class="px-3 py-1 rounded-l border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                               Précédent
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="px-3 py-1 border-t border-b border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        Page {{ movements.number }} / {{ movements.paginator.num_pages }}
+                    </li>
+                    {% if movements.has_next %}
+                        <li>
+                            <a href="?page={{ movements.next_page_number }}" 
+                               class="px-3 py-1 rounded-r border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                               Suivant
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+    <div class="mt-6">
+        <a href="{% url 'movement_list' %}" class="text-red-600 hover:underline">&larr; Retour à la liste des mouvements</a>
+    </div>
+</div>
+{% endblock %}

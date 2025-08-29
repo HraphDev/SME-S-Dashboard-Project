@@ -1,0 +1,158 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<div class="container mx-auto p-6 max-w-6xl">
+    <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+        <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold">
+                    <i class="fas fa-truck text-blue-500"></i> {{ supplier.name }}
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">
+                    Created: {{ supplier.created_at|date:"M d, Y" }} | 
+                    Last Updated: {{ supplier.updated_at|date:"M d, Y" }}
+                </p>
+            </div>
+
+            {% if user.role == 'admin' %}
+            <div class="space-x-2">
+                <a href="{% url 'supplier_update' supplier.pk %}" 
+                   class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition">
+                    <i class="fas fa-edit mr-2"></i> Edit
+                </a>
+                <a href="{% url 'supplier_delete' supplier.pk %}" 
+                   class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200 transition">
+                    <i class="fas fa-trash mr-2"></i> Delete
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        
+        
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Contact Person</h3>
+                    <p class="mt-1 text-lg font-medium">
+                        {{ supplier.contact|default:"-" }}
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Email</h3>
+                    <p class="mt-1 text-lg">
+                        {% if supplier.email %}
+                        <a href="mailto:{{ supplier.email }}" class="text-blue-600 hover:underline">
+                            <i class="fas fa-envelope mr-1"></i> {{ supplier.email }}
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Phone</h3>
+                    <p class="mt-1 text-lg">
+                        <a href="tel:{{ supplier.phone }}" class="hover:text-blue-600">
+                            <i class="fas fa-phone-alt mr-1"></i> {{ supplier.phone }}
+                        </a>
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Address</h3>
+                    <p class="mt-1 text-lg whitespace-pre-line">
+                        {% if supplier.address %}
+                        <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                        {{ supplier.address }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+            <h3 class="font-bold">
+                <i class="fas fa-boxes text-blue-500"></i> Supplied Products
+                <span class="ml-2 bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                    {{ supplier.products.count }}
+                </span>
+            </h3>
+            <a href="{% url 'product_create' %}?supplier={{ supplier.pk }}"
+               class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200 transition">
+                <i class="fas fa-plus-circle mr-2"></i> Add Product
+            </a>
+        </div>
+
+        {% if supplier.products.all %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for product in supplier.products.all %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="{% url 'product_detail' product.pk %}" class="text-blue-600 hover:underline">
+                                {{ product.name }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{ product.category.name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="{% if product.quantity < 10 %}text-red-600 font-bold{% else %}text-gray-600{% endif %}">
+                                {{ product.quantity }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{ product.price }} MAD
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                            <a href="{% url 'product_update' product.pk %}" class="text-yellow-600 hover:text-yellow-800">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'product_movement_history' product.pk %}" class="text-purple-600 hover:text-purple-800">
+                                <i class="fas fa-exchange-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500">
+            <i class="fas fa-box-open text-3xl mb-2"></i>
+            <p>No products linked to this supplier yet.</p>
+            <a href="{% url 'product_create' %}?supplier={{ supplier.pk }}"
+               class="mt-3 inline-flex items-center text-blue-600 hover:underline">
+                <i class="fas fa-plus-circle mr-1"></i> Add the first product
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mt-6">
+        <a href="{% url 'supplier_list' %}" 
+           class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Suppliers List
+        </a>
+    </div>
+</div>
+{% endblock %}

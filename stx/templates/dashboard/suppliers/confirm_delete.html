@@ -1,0 +1,29 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<div class="container mx-auto p-6 max-w-md">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-center mb-6">
+            <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+            <h2 class="text-xl font-bold">Confirm Deletion</h2>
+        </div>
+        
+        <p class="mb-6 text-center">
+            Are you sure you want to delete <strong>{{ supplier.name }}</strong>? 
+            This action cannot be undone.
+        </p>
+        
+        <form method="post" class="flex justify-center space-x-4">
+            {% csrf_token %}
+            <a href="{% url 'supplier_detail' supplier.pk %}" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg">
+                Cancel
+            </a>
+            <button type="submit" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">
+                <i class="fas fa-trash mr-2"></i> Delete Permanently
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
