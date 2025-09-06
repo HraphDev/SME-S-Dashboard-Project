@@ -805,8 +805,7 @@ def report_list(request):
             F('movements__quantity') * 
             Case(
                 When(movements__movement_type='in', then=1),
-                When(movements__movement_type='out', then=-1),
-                default=0
+                When(movements__movement_type='out', then=0),
             )
         )
     )
