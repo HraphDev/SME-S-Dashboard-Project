@@ -18,7 +18,7 @@ Key features include:
 🏗️ Tech Stack  
 - **Backend:** Django (Python 3.x)  
 - **Frontend:** HTML, CSS, Bootstrap (customized UI)  
-- **Database:** SQLite (default, can be swapped to PostgreSQL/MySQL)  
+- **Database:** SQLite 
 - **Other:** Django Auth System, Messages Framework  
 
 ---
